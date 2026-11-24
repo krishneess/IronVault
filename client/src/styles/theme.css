@@ -1,0 +1,607 @@
+/* ==========================================================================
+   IronVault – Gold & Dark design system
+   Bootstrap 5 is themed through its CSS variables; custom tokens use --iv-*.
+   ========================================================================== */
+
+:root,
+[data-bs-theme='dark'] {
+  /* Surfaces */
+  --iv-bg: #0b0b0d;
+  --iv-bg-elevated: #111114;
+  --iv-surface: #16161a;
+  --iv-surface-2: #1c1c21;
+  --iv-surface-3: #24242a;
+  --iv-border: #2a2a31;
+  --iv-border-soft: #202026;
+
+  /* Gold */
+  --iv-gold: #d4af37;
+  --iv-gold-bright: #f3de9c;
+  --iv-gold-deep: #9c7a1e;
+  --iv-champagne: #e8d3a2;
+  --iv-gold-08: rgba(212, 175, 55, 0.08);
+  --iv-gold-15: rgba(212, 175, 55, 0.15);
+  --iv-gold-30: rgba(212, 175, 55, 0.3);
+  --iv-gold-gradient: linear-gradient(135deg, #f3de9c 0%, #d4af37 45%, #a8841f 100%);
+
+  /* Text */
+  --iv-text: #eeebe3;
+  --iv-text-muted: #9b978d;
+  --iv-text-dim: #6c6961;
+
+  /* Status */
+  --iv-success: #4cc38a;
+  --iv-danger: #e5604d;
+  --iv-warning: #e8b04a;
+  --iv-info: #6fa8dc;
+
+  --iv-radius-sm: 8px;
+  --iv-radius: 14px;
+  --iv-radius-lg: 20px;
+  --iv-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  --iv-shadow-gold: 0 10px 30px rgba(212, 175, 55, 0.12);
+  --iv-font-ui: 'Manrope', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --iv-font-display: 'Playfair Display', Georgia, serif;
+  --iv-sidebar-w: 264px;
+  --iv-topbar-h: 68px;
+
+  /* Bootstrap overrides */
+  --bs-body-bg: var(--iv-bg);
+  --bs-body-color: var(--iv-text);
+  --bs-body-font-family: var(--iv-font-ui);
+  --bs-secondary-color: var(--iv-text-muted);
+  --bs-tertiary-color: var(--iv-text-dim);
+  --bs-border-color: var(--iv-border);
+  --bs-border-color-translucent: var(--iv-border);
+  --bs-secondary-bg: var(--iv-surface-2);
+  --bs-tertiary-bg: var(--iv-surface);
+  --bs-emphasis-color: #fff;
+  --bs-heading-color: var(--iv-text);
+  --bs-link-color: var(--iv-gold);
+  --bs-link-color-rgb: 212, 175, 55;
+  --bs-link-hover-color: var(--iv-gold-bright);
+  --bs-link-hover-color-rgb: 243, 222, 156;
+  --bs-primary: var(--iv-gold);
+  --bs-primary-rgb: 212, 175, 55;
+  --bs-success-rgb: 76, 195, 138;
+  --bs-danger-rgb: 229, 96, 77;
+  --bs-warning-rgb: 232, 176, 74;
+  --bs-focus-ring-color: var(--iv-gold-30);
+  --bs-border-radius: var(--iv-radius-sm);
+  --bs-border-radius-lg: var(--iv-radius);
+  --bs-form-invalid-color: var(--iv-danger);
+  --bs-form-invalid-border-color: var(--iv-danger);
+  --bs-form-valid-border-color: var(--iv-success);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--iv-bg);
+  color: var(--iv-text);
+  font-family: var(--iv-font-ui);
+  -webkit-font-smoothing: antialiased;
+  letter-spacing: 0.005em;
+}
+
+::selection {
+  background: var(--iv-gold-30);
+  color: #fff;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--iv-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--iv-surface-3);
+  border-radius: 10px;
+  border: 2px solid var(--iv-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--iv-gold-deep);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.font-display {
+  font-family: var(--iv-font-display);
+  letter-spacing: 0;
+}
+
+.text-gold {
+  color: var(--iv-gold) !important;
+}
+.text-champagne {
+  color: var(--iv-champagne) !important;
+}
+.text-muted-iv {
+  color: var(--iv-text-muted) !important;
+}
+.text-gold-gradient {
+  background: var(--iv-gold-gradient);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.eyebrow {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--iv-gold);
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  --bs-btn-font-weight: 600;
+  --bs-btn-padding-x: 1.1rem;
+  --bs-btn-padding-y: 0.6rem;
+  --bs-btn-border-radius: 10px;
+  letter-spacing: 0.01em;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+.btn:active {
+  transform: translateY(1px);
+}
+.btn-lg {
+  --bs-btn-padding-x: 1.6rem;
+  --bs-btn-padding-y: 0.8rem;
+  --bs-btn-font-size: 1rem;
+}
+
+.btn-gold {
+  --bs-btn-color: #1a1406;
+  --bs-btn-hover-color: #1a1406;
+  --bs-btn-active-color: #1a1406;
+  --bs-btn-disabled-color: #1a1406;
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-border-color: transparent;
+  --bs-btn-active-border-color: transparent;
+  --bs-btn-disabled-border-color: transparent;
+  --bs-btn-disabled-opacity: 0.55;
+  background: var(--iv-gold-gradient);
+  background-size: 140% 140%;
+  background-position: 0% 50%;
+  box-shadow: 0 6px 18px rgba(212, 175, 55, 0.18);
+}
+.btn-gold:hover,
+.btn-gold:focus-visible {
+  background: var(--iv-gold-gradient);
+  background-size: 140% 140%;
+  background-position: 100% 50%;
+  box-shadow: 0 10px 26px rgba(212, 175, 55, 0.3);
+}
+
+.btn-outline-gold {
+  --bs-btn-color: var(--iv-gold);
+  --bs-btn-border-color: var(--iv-gold-30);
+  --bs-btn-hover-color: var(--iv-gold-bright);
+  --bs-btn-hover-bg: var(--iv-gold-08);
+  --bs-btn-hover-border-color: var(--iv-gold);
+  --bs-btn-active-color: var(--iv-gold-bright);
+  --bs-btn-active-bg: var(--iv-gold-15);
+  --bs-btn-active-border-color: var(--iv-gold);
+}
+
+.btn-ghost {
+  --bs-btn-color: var(--iv-text-muted);
+  --bs-btn-hover-color: var(--iv-text);
+  --bs-btn-hover-bg: var(--iv-surface-2);
+  --bs-btn-active-bg: var(--iv-surface-3);
+  --bs-btn-border-color: transparent;
+  --bs-btn-hover-border-color: transparent;
+}
+
+.btn-danger-soft {
+  --bs-btn-color: #f0a197;
+  --bs-btn-bg: rgba(229, 96, 77, 0.12);
+  --bs-btn-border-color: rgba(229, 96, 77, 0.35);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--iv-danger);
+  --bs-btn-hover-border-color: var(--iv-danger);
+}
+
+.btn-icon {
+  --bs-btn-padding-x: 0.55rem;
+  --bs-btn-padding-y: 0.55rem;
+}
+
+/* ---------- Forms ---------- */
+.form-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--iv-champagne);
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.02em;
+}
+.form-control,
+.form-select {
+  background-color: var(--iv-bg-elevated);
+  border: 1px solid var(--iv-border);
+  color: var(--iv-text);
+  border-radius: 10px;
+  padding: 0.65rem 0.9rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.form-control::placeholder {
+  color: var(--iv-text-dim);
+}
+.form-control:focus,
+.form-select:focus {
+  background-color: var(--iv-bg-elevated);
+  color: var(--iv-text);
+  border-color: var(--iv-gold);
+  box-shadow: 0 0 0 0.2rem var(--iv-gold-15);
+}
+.form-control:disabled {
+  background-color: var(--iv-surface);
+  color: var(--iv-text-muted);
+}
+.form-check-input:checked {
+  background-color: var(--iv-gold);
+  border-color: var(--iv-gold);
+}
+.input-icon {
+  position: relative;
+}
+.input-icon > svg {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--iv-text-dim);
+  pointer-events: none;
+}
+.input-icon > .form-control {
+  padding-left: 2.6rem;
+}
+.input-icon > .input-action {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: 0;
+  color: var(--iv-text-dim);
+  padding: 0.35rem;
+  border-radius: 6px;
+  display: inline-flex;
+}
+.input-icon > .input-action:hover {
+  color: var(--iv-gold);
+}
+.input-icon > .form-control.has-action {
+  padding-right: 2.6rem;
+}
+.invalid-feedback {
+  font-size: 0.78rem;
+}
+
+/* ---------- Cards ---------- */
+.iv-card {
+  background: linear-gradient(180deg, var(--iv-surface) 0%, #131317 100%);
+  border: 1px solid var(--iv-border-soft);
+  border-radius: var(--iv-radius);
+  box-shadow: var(--iv-shadow);
+}
+.iv-card-header {
+  padding: 1.1rem 1.35rem;
+  border-bottom: 1px solid var(--iv-border-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.iv-card-title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+}
+.iv-card-body {
+  padding: 1.35rem;
+}
+
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  padding: 1.25rem 1.35rem;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.stat-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--iv-gold-30);
+}
+.stat-card::after {
+  content: '';
+  position: absolute;
+  inset: auto -30% -60% auto;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--iv-gold-08), transparent 70%);
+  pointer-events: none;
+}
+.stat-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  color: var(--iv-gold);
+  background: var(--iv-gold-08);
+  border: 1px solid var(--iv-gold-15);
+}
+.stat-label {
+  font-size: 0.78rem;
+  color: var(--iv-text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.stat-value {
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-top: 0.35rem;
+}
+.stat-hint {
+  font-size: 0.8rem;
+  color: var(--iv-text-dim);
+}
+
+/* ---------- Badges ---------- */
+.iv-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.28rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+}
+.iv-badge-gold {
+  color: var(--iv-gold-bright);
+  background: var(--iv-gold-08);
+  border-color: var(--iv-gold-30);
+}
+.iv-badge-success {
+  color: #8fe0b8;
+  background: rgba(76, 195, 138, 0.1);
+  border-color: rgba(76, 195, 138, 0.3);
+}
+.iv-badge-danger {
+  color: #f3a397;
+  background: rgba(229, 96, 77, 0.1);
+  border-color: rgba(229, 96, 77, 0.3);
+}
+.iv-badge-warning {
+  color: #f2cd88;
+  background: rgba(232, 176, 74, 0.1);
+  border-color: rgba(232, 176, 74, 0.3);
+}
+.iv-badge-muted {
+  color: var(--iv-text-muted);
+  background: var(--iv-surface-2);
+  border-color: var(--iv-border);
+}
+.iv-badge-info {
+  color: #a9cbeb;
+  background: rgba(111, 168, 220, 0.1);
+  border-color: rgba(111, 168, 220, 0.3);
+}
+
+/* ---------- Tables ---------- */
+.iv-table {
+  --bs-table-bg: transparent;
+  --bs-table-color: var(--iv-text);
+  --bs-table-border-color: var(--iv-border-soft);
+  --bs-table-hover-bg: rgba(212, 175, 55, 0.04);
+  --bs-table-hover-color: var(--iv-text);
+  margin: 0;
+}
+.iv-table thead th {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--iv-text-muted);
+  font-weight: 700;
+  background: var(--iv-bg-elevated);
+  border-bottom: 1px solid var(--iv-border);
+  padding: 0.85rem 1rem;
+  white-space: nowrap;
+}
+.iv-table tbody td {
+  padding: 0.9rem 1rem;
+  vertical-align: middle;
+}
+
+/* ---------- Avatar ---------- */
+.iv-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: #1a1406;
+  background: var(--iv-gold-gradient);
+  flex-shrink: 0;
+}
+.iv-avatar-lg {
+  width: 72px;
+  height: 72px;
+  font-size: 1.5rem;
+}
+
+/* ---------- Loaders / empty states ---------- */
+.iv-spinner {
+  width: 2.4rem;
+  height: 2.4rem;
+  border-radius: 50%;
+  border: 3px solid var(--iv-gold-15);
+  border-top-color: var(--iv-gold);
+  animation: iv-spin 0.8s linear infinite;
+}
+.iv-spinner-sm {
+  width: 1rem;
+  height: 1rem;
+  border-width: 2px;
+}
+@keyframes iv-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.page-loader {
+  min-height: 50vh;
+  display: grid;
+  place-items: center;
+  gap: 1rem;
+  color: var(--iv-text-muted);
+}
+.page-loader.fullscreen {
+  min-height: 100vh;
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--iv-surface-2) 25%, var(--iv-surface-3) 50%, var(--iv-surface-2) 75%);
+  background-size: 200% 100%;
+  animation: iv-shimmer 1.4s infinite;
+  border-radius: 8px;
+}
+@keyframes iv-shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.empty-state {
+  text-align: center;
+  padding: 3rem 1.5rem;
+  color: var(--iv-text-muted);
+}
+.empty-state-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: var(--iv-gold);
+  background: var(--iv-gold-08);
+  border: 1px dashed var(--iv-gold-30);
+}
+
+/* ---------- Toasts ---------- */
+.iv-toast-stack {
+  position: fixed;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  width: min(380px, calc(100vw - 2.5rem));
+}
+.iv-toast {
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.9rem 1rem;
+  background: var(--iv-surface-2);
+  border: 1px solid var(--iv-border);
+  border-left: 3px solid var(--iv-gold);
+  border-radius: 12px;
+  box-shadow: var(--iv-shadow);
+  animation: iv-toast-in 0.25s ease-out;
+}
+.iv-toast.success {
+  border-left-color: var(--iv-success);
+}
+.iv-toast.error {
+  border-left-color: var(--iv-danger);
+}
+.iv-toast.warning {
+  border-left-color: var(--iv-warning);
+}
+.iv-toast-title {
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.iv-toast-msg {
+  font-size: 0.84rem;
+  color: var(--iv-text-muted);
+}
+@keyframes iv-toast-in {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+/* ---------- Modal (confirm dialog) ---------- */
+.iv-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 1900;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  animation: iv-fade 0.15s ease-out;
+}
+.iv-modal {
+  width: min(460px, 100%);
+  background: var(--iv-surface);
+  border: 1px solid var(--iv-border);
+  border-radius: var(--iv-radius-lg);
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: iv-pop 0.18s ease-out;
+}
+.iv-modal-lg {
+  width: min(760px, 100%);
+}
+@keyframes iv-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes iv-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+}
+
+.divider-gold {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--iv-gold-30), transparent);
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
