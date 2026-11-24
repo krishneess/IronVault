@@ -7,6 +7,8 @@ import env from './config/env.js';
 import routes from './routes/index.js';
 import { notFound, errorHandler } from './middleware/errorHandler.js';
 import { securityHeaders, rateLimit } from './middleware/security.js';
+import { connectDB } from './config/db.js';
+import ApiError from './utils/ApiError.js';
 
 const FIFTEEN_MINUTES = 15 * 60 * 1000;
 const app = express();
@@ -37,7 +39,28 @@ const authLimiter = rateLimit({
 app.use(['/api/auth/login', '/api/auth/register'], authLimiter);
 app.use('/api', rateLimit({ name: 'api', windowMs: FIFTEEN_MINUTES, max: env.apiRateLimit }));
 
+/**
+ * Ensure the MongoDB connection before any API work. connectDB() caches its promise, so this is a
+ * no-op once connected. This makes the app self-sufficient when a platform imports it directly
+ * (e.g. Vercel's Express support loads src/app.js and never runs server.js's start()).
+ */
+app.use('/api', async (_req, _res, next) => {
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error('[db] Connection failed:', err.message);
+    next(new ApiError(503, 'The database is temporarily unavailable. Please try again shortly.', undefined, 'DB_UNAVAILABLE'));
+  }
+});
+
 app.use('/api', routes);
+
+// A friendly answer at the bare domain, so the API root doesn't look broken.
+app.get('/', (_req, res) => {
+  if (env.serveClient) return res.redirect('/index.html');
+  res.json({ success: true, message: 'IronVault API', data: { health: '/api/health', docs: 'All endpoints are under /api' } });
+});
 
 // Optional: serve the built frontend from the same origin (SERVE_CLIENT=true).
 if (env.serveClient) {
