@@ -66,8 +66,8 @@ export default function Register() {
     setLoading(true);
     try {
       const user = await register(payload);
-      toast.success('Welcome to IronVault!', `Your member account is ready, ${user.name.split(' ')[0]}.`);
-      navigate('/member', { replace: true });
+      toast.success('Welcome to IronVault!', `Your account is ready, ${user.name.split(' ')[0]}. Choose a membership plan to unlock training.`);
+      navigate('/member/membership', { replace: true });
     } catch (err) {
       setFormError(err.message);
       if (err.errors) setErrors(err.errors);

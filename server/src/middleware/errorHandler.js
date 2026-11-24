@@ -10,7 +10,7 @@ export function notFound(req, _res, next) {
 // eslint-disable-next-line no-unused-vars
 export function errorHandler(err, _req, res, _next) {
   if (err instanceof ApiError) {
-    return sendError(res, { statusCode: err.statusCode, message: err.message, errors: err.errors });
+    return sendError(res, { statusCode: err.statusCode, message: err.message, errors: err.errors, code: err.code });
   }
 
   if (err instanceof mongoose.Error.ValidationError) {

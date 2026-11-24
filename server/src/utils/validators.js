@@ -67,6 +67,41 @@ export function pick(source = {}, keys = []) {
   }, {});
 }
 
+export const isValidId = (value) => typeof value === 'string' && /^[a-f\d]{24}$/i.test(value);
+
+export const hasErrors = (errors) => Object.keys(errors).length > 0;
+
+/**
+ * Validates each item of an array against a schema; errors are keyed `${prefix}.${index}.${field}`.
+ */
+export function validateItems(items, schema, prefix) {
+  const errors = {};
+  (items || []).forEach((item, index) => {
+    const itemErrors = validate(item || {}, schema);
+    for (const [field, message] of Object.entries(itemErrors)) errors[`${prefix}.${index}.${field}`] = message;
+  });
+  return errors;
+}
+
+/**
+ * Splits optional profile fields into values to $set and blank values to $unset.
+ * Numbers are converted; strings are trimmed.
+ */
+export function buildUpdate(body, { strings = [], numbers = [], optional = [] }) {
+  const set = {};
+  const unset = [];
+  const blank = (v) => v === null || (typeof v === 'string' && v.trim() === '');
+  for (const key of [...strings, ...numbers]) {
+    if (body[key] === undefined) continue;
+    if (blank(body[key])) {
+      if (optional.includes(key)) unset.push(key);
+      continue;
+    }
+    set[key] = numbers.includes(key) ? Number(body[key]) : String(body[key]).trim();
+  }
+  return { set, unset };
+}
+
 export function escapeRegex(text = '') {
   return String(text).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }

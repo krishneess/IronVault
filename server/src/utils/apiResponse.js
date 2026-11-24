@@ -9,8 +9,9 @@ export function sendSuccess(res, { statusCode = 200, message = 'OK', data = null
   return res.status(statusCode).json(body);
 }
 
-export function sendError(res, { statusCode = 500, message = 'Internal server error', errors } = {}) {
+export function sendError(res, { statusCode = 500, message = 'Internal server error', errors, code } = {}) {
   const body = { success: false, message };
+  if (code) body.code = code;
   if (errors) body.errors = errors;
   return res.status(statusCode).json(body);
 }

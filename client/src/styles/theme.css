@@ -287,6 +287,20 @@ h1, h2, h3, h4, h5, h6 {
 .input-icon > .form-control.has-action {
   padding-right: 2.6rem;
 }
+/* Native dropdown lists follow the dark theme. */
+.form-select option {
+  background-color: var(--iv-surface-2);
+  color: var(--iv-text);
+}
+/* SearchInput renders its own clear button. */
+input[type='search']::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+/* Keep Bootstrap's validation icon from colliding with the show/hide password button. */
+.input-icon > .form-control.has-action.is-invalid {
+  background-image: none;
+}
 .invalid-feedback {
   font-size: 0.78rem;
 }

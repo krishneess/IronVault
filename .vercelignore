@@ -1,0 +1,9 @@
+# Keep deployments lean – only api/, server/ and client/ are needed.
+**/node_modules
+**/.env
+**/.env.*
+.claude
+postman
+server/tests
+client/dist
+*.log

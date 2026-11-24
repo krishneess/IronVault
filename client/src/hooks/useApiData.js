@@ -6,17 +6,17 @@ import { useCallback, useEffect, useRef, useState } from 'react';
  * `fetcher` must return the API envelope; `data` is envelope.data, `meta` is envelope.meta.
  */
 export default function useApiData(fetcher, deps = []) {
-  const [state, setState] = useState({ data: null, meta: null, loading: true, error: null });
+  const [state, setState] = useState({ data: null, meta: null, loading: true, error: null, errorCode: null });
   const fetcherRef = useRef(fetcher);
   fetcherRef.current = fetcher;
 
   const load = useCallback(async () => {
-    setState((s) => ({ ...s, loading: true, error: null }));
+    setState((s) => ({ ...s, loading: true, error: null, errorCode: null }));
     try {
       const res = await fetcherRef.current();
-      setState({ data: res?.data ?? null, meta: res?.meta ?? null, loading: false, error: null });
+      setState({ data: res?.data ?? null, meta: res?.meta ?? null, loading: false, error: null, errorCode: null });
     } catch (err) {
-      setState((s) => ({ ...s, loading: false, error: err.message || 'Request failed' }));
+      setState((s) => ({ ...s, loading: false, error: err.message || 'Request failed', errorCode: err.code || null }));
     }
   }, []);
 

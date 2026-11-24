@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, LogOut } from 'lucide-react';
 import Sidebar from './Sidebar';
@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useConfirm } from '../../context/ConfirmContext';
 import { useToast } from '../../context/ToastContext';
 import { findNavLabel } from '../../routes/navigation';
+import { PageLoader } from '../common/Feedback';
 
 /** Shared dashboard shell for Member, Trainer and Admin – same visual identity, role-specific navigation. */
 export default function DashboardLayout() {
@@ -21,8 +22,7 @@ export default function DashboardLayout() {
 
   useEffect(() => {
     document.title = `${title} · IronVault`;
-    setSidebarOpen(false);
-  }, [title, pathname]);
+  }, [title]);
 
   const handleLogout = async () => {
     const ok = await confirm({
@@ -63,7 +63,9 @@ export default function DashboardLayout() {
           </button>
         </header>
         <main className="page-content mx-auto">
-          <Outlet />
+          <Suspense fallback={<PageLoader />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

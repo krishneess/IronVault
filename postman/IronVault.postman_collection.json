@@ -1,0 +1,2187 @@
+{
+  "info": {
+    "name": "IronVault API",
+    "description": "IronVault – Gym Fitness Repository Management System.\n\nRun the whole collection in order (Collection Runner or Newman). Set `baseUrl`, `adminIdentifier` and `adminPassword` in an environment first. Created data uses `@e2e.ironvault.test` emails and `E2E` tier names – remove it with `npm run test:cleanup` in /server.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "runId",
+      "value": ""
+    },
+    {
+      "key": "adminToken",
+      "value": ""
+    },
+    {
+      "key": "memberToken",
+      "value": ""
+    },
+    {
+      "key": "trainerToken",
+      "value": ""
+    },
+    {
+      "key": "memberId",
+      "value": ""
+    },
+    {
+      "key": "memberUsername",
+      "value": ""
+    },
+    {
+      "key": "trainerId",
+      "value": ""
+    },
+    {
+      "key": "tierId",
+      "value": ""
+    },
+    {
+      "key": "membershipId",
+      "value": ""
+    },
+    {
+      "key": "workoutPlanId",
+      "value": ""
+    },
+    {
+      "key": "dietPlanId",
+      "value": ""
+    },
+    {
+      "key": "recordId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "0 · Health",
+      "description": "API and database status.",
+      "item": [
+        {
+          "name": "Health check",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/health"
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('runId', Date.now().toString(36));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"database connected\", () => pm.expect(body.data.database === 'connected').to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "1 · Authentication",
+      "description": "JWT login, registration and validation.",
+      "item": [
+        {
+          "name": "Admin login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{adminIdentifier}}\",\n  \"password\": \"{{adminPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"role is admin\", () => pm.expect(body.data.user.role === 'admin').to.be.true);",
+                  "pm.collectionVariables.set('adminToken', body.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Member\",\n  \"email\": \"pm_{{runId}}@e2e.ironvault.test\",\n  \"username\": \"pm_{{runId}}\",\n  \"password\": \"Passw0rd!pm\",\n  \"age\": 28,\n  \"height\": 175,\n  \"weight\": 78,\n  \"fitnessGoal\": \"Build strength\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test(\"member role\", () => pm.expect(body.data.user.role === 'member').to.be.true);",
+                  "pm.test(\"password not returned\", () => pm.expect(!('password' in body.data.user)).to.be.true);",
+                  "pm.collectionVariables.set('memberToken', body.data.token);",
+                  "pm.collectionVariables.set('memberId', body.data.user._id);",
+                  "pm.collectionVariables.set('memberUsername', body.data.user.username);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register duplicate (409)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Dup\",\n  \"email\": \"pm_{{runId}}@e2e.ironvault.test\",\n  \"username\": \"pm_{{runId}}\",\n  \"password\": \"Passw0rd!pm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 409', () => pm.response.to.have.status(409));",
+                  "pm.test(\"field errors returned\", () => pm.expect(Boolean(body.errors.email && body.errors.username)).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Register validation (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"x\",\n  \"email\": \"not-an-email\",\n  \"username\": \"!\",\n  \"password\": \"123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"errors for each field\", () => pm.expect(Object.keys(body.errors).length >= 4).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Login wrong password (401)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"{{memberUsername}}\",\n  \"password\": \"wrong-pass1\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current user (member)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"same user\", () => pm.expect(body.data.user._id === pm.collectionVariables.get('memberId')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Current user without token (401)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 401', () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "2 · Admin – accounts",
+      "description": "Member and trainer management (admin only).",
+      "item": [
+        {
+          "name": "Create trainer",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/trainers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Postman Trainer\",\n  \"email\": \"pmt_{{runId}}@e2e.ironvault.test\",\n  \"username\": \"pmt_{{runId}}\",\n  \"password\": \"Trainer123pm\",\n  \"specialization\": \"Strength & Conditioning\",\n  \"experience\": 6\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test(\"trainer role\", () => pm.expect(body.data.role === 'trainer').to.be.true);",
+                  "pm.collectionVariables.set('trainerId', body.data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trainer login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"pmt_{{runId}}\",\n  \"password\": \"Trainer123pm\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.collectionVariables.set('trainerToken', body.data.token);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List members (search)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/members?search=pm_{{runId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"found the new member\", () => pm.expect(body.data.length === 1).to.be.true);",
+                  "pm.test(\"paginated\", () => pm.expect(typeof body.meta.total === 'number').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get member overview",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/members/{{memberId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"has membership section\", () => pm.expect('membership' in body.data).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/members/{{memberId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+91 90000 11111\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"phone updated\", () => pm.expect(body.data.phone === '+91 90000 11111').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List trainers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/trainers?search=pmt_{{runId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"load stats present\", () => pm.expect(body.data[0].stats.activeMembers === 0).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trainer options (allocation picker)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/trainers/options"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"includes new trainer\", () => pm.expect(body.data.some(t => t._id === pm.collectionVariables.get('trainerId'))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Member cannot access admin API (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/members"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "3 · Memberships",
+      "description": "Tiers and the membership lifecycle (state chart).",
+      "item": [
+        {
+          "name": "Create tier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/membership-tiers",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"E2E Postman {{runId}}\",\n  \"description\": \"Postman test tier\",\n  \"durationInDays\": 30,\n  \"price\": 1999,\n  \"maxHoldDays\": 14,\n  \"features\": [\n    \"Trainer\",\n    \"Diet plan\"\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('tierId', body.data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Public tier catalogue",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/membership-tiers"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"new tier listed\", () => pm.expect(body.data.some(t => t._id === pm.collectionVariables.get('tierId'))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Training blocked without membership (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/members/me/plans"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));",
+                  "pm.test(\"MEMBERSHIP_INACTIVE code\", () => pm.expect(body.code === 'MEMBERSHIP_INACTIVE').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Member selects plan → Created",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tierId\": \"{{tierId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test(\"status created\", () => pm.expect(body.data.status === 'created').to.be.true);",
+                  "pm.collectionVariables.set('membershipId', body.data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Member submits → Payment pending",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/{{membershipId}}/transitions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"submit\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"payment_pending\", () => pm.expect(body.data.status === 'payment_pending').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Member cannot verify payment (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/{{membershipId}}/transitions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"verify_payment\",\n  \"paymentMethod\": \"cash\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin verifies payment → Active",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/{{membershipId}}/transitions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"verify_payment\",\n  \"paymentMethod\": \"upi\",\n  \"paymentReference\": \"PM-{{runId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"active\", () => pm.expect(body.data.status === 'active').to.be.true);",
+                  "pm.test(\"30 days validity\", () => pm.expect(body.data.validity.daysRemaining === 30).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My membership",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/me"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"valid\", () => pm.expect(body.data.validity.isValid === true).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assign trainer to member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/assignments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"{{memberId}}\",\n  \"trainerId\": \"{{trainerId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "4 · Trainer – coaching",
+      "description": "Profiles, plans and assignments (trainer).",
+      "item": [
+        {
+          "name": "Update trainer profile",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/trainers/me",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bio\": \"Postman-tested coach\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My members",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/trainers/me/members"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"member assigned\", () => pm.expect(body.data.some(r => r.member._id === pm.collectionVariables.get('memberId'))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create workout plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/workout-plans",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Strength Block\",\n  \"description\": \"Three sessions a week\",\n  \"level\": \"intermediate\",\n  \"durationInWeeks\": 6,\n  \"exercises\": [\n    {\n      \"name\": \"Back Squat\",\n      \"sets\": 4,\n      \"repetitions\": 6,\n      \"restTime\": 120\n    },\n    {\n      \"name\": \"Bench Press\",\n      \"sets\": 4,\n      \"repetitions\": 8,\n      \"restTime\": 90\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.test(\"two exercises\", () => pm.expect(body.data.exercises.length === 2).to.be.true);",
+                  "pm.collectionVariables.set('workoutPlanId', body.data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Workout plan validation (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/workout-plans",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"x\",\n  \"level\": \"expert\",\n  \"durationInWeeks\": 0,\n  \"exercises\": [\n    {\n      \"name\": \"\",\n      \"sets\": 0,\n      \"repetitions\": 0\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));",
+                  "pm.test(\"nested exercise errors\", () => pm.expect('exercises.0.name' in body.errors).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assign workout plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/workout-plans/{{workoutPlanId}}/assignments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"{{memberId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create diet plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/diet-plans",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Lean 2000\",\n  \"goal\": \"Fat loss\",\n  \"calorieTarget\": 2000,\n  \"meals\": [\n    {\n      \"mealName\": \"Oats & whey\",\n      \"time\": \"07:30\",\n      \"calories\": 520\n    },\n    {\n      \"mealName\": \"Chicken rice bowl\",\n      \"time\": \"13:00\",\n      \"calories\": 700\n    }\n  ]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('dietPlanId', body.data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Assign diet plan",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/diet-plans/{{dietPlanId}}/assignments",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"memberId\": \"{{memberId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Member cannot create plans (403)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/workout-plans",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "5 · Member – training",
+      "description": "Plans and progress tracking (member).",
+      "item": [
+        {
+          "name": "My trainer",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/members/me/trainer"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"trainer assigned\", () => pm.expect(body.data.trainer._id === pm.collectionVariables.get('trainerId')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "My plans",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/members/me/plans"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"one of each\", () => pm.expect(body.data.workoutPlans.length === 1 && body.data.dietPlans.length === 1).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "View workout plan",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/workout-plans/{{workoutPlanId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"member list hidden\", () => pm.expect(!('assignedMembers' in body.data)).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Log progress",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/fitness-records",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recordDate\": \"{{today}}\",\n  \"weight\": 77.4,\n  \"bodyFatPercentage\": 18.5,\n  \"chest\": 101,\n  \"waist\": 84,\n  \"arms\": 37,\n  \"legs\": 59,\n  \"notes\": \"Postman check-in\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set('today', new Date().toISOString().slice(0, 10));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 201', () => pm.response.to.have.status(201));",
+                  "pm.collectionVariables.set('recordId', body.data._id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Progress validation (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/fitness-records",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"weight\": 5,\n  \"recordDate\": \"2099-01-01\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Progress history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/fitness-records"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"one record\", () => pm.expect(body.data.length === 1).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update progress record",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/fitness-records/{{recordId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"recordDate\": \"{{today}}\",\n  \"weight\": 77.1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"weight updated\", () => pm.expect(body.data.weight === 77.1).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Progress summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/fitness-records/summary"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"count 1\", () => pm.expect(body.data.count === 1).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Member dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/dashboard/member"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"unlocked\", () => pm.expect(body.data.locked === false).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Trainer monitors progress",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/trainers/me/members/{{memberId}}/progress"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"sees record\", () => pm.expect(body.data.length === 1).to.be.true);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6 · Admin – lifecycle & insights",
+      "description": "Holds, subscriptions, reports and audit.",
+      "item": [
+        {
+          "name": "Hold requires a reason (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/{{membershipId}}/transitions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"suspend\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 400', () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Place on hold → Suspended",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/{{membershipId}}/transitions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"suspend\",\n  \"note\": \"Postman hold\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"suspended\", () => pm.expect(body.data.status === 'suspended').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Suspended member is gated (403)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/fitness-records"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 403', () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resume → Active",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/{{membershipId}}/transitions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"resume\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"active\", () => pm.expect(body.data.status === 'active').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Subscriptions list",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships?status=active&search=Postman Member"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"found\", () => pm.expect(body.data.length >= 1).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Subscription summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/summary"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"has counts\", () => pm.expect(typeof body.data.counts.active === 'number').to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Operational report",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/reports/operational"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"12-month series\", () => pm.expect(body.data.signupsByMonth.length === 12).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Audit log",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/audit-logs?action=MEMBERSHIP_VERIFY_PAYMENT&limit=5"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test(\"filtered\", () => pm.expect(body.data.every(a => a.action === 'MEMBERSHIP_VERIFY_PAYMENT')).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Admin dashboard",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/dashboard/admin"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "7 · Teardown",
+      "description": "Closes everything this run created.",
+      "item": [
+        {
+          "name": "Delete progress record",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{memberToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/fitness-records/{{recordId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete workout plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/workout-plans/{{workoutPlanId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete diet plan",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{trainerToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/diet-plans/{{dietPlanId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Terminate membership",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/memberships/{{membershipId}}/transitions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"terminate\",\n  \"note\": \"Postman teardown\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deactivate member",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/members/{{memberId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deactivate trainer",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/admin/trainers/{{trainerId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Deactivate tier",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminToken}}"
+              }
+            ],
+            "url": "{{baseUrl}}/membership-tiers/{{tierId}}/status",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"isActive\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const body = pm.response.json();",
+                  "pm.test('consistent response envelope', () => pm.expect(body).to.have.property('success'));",
+                  "pm.test('status is 200', () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

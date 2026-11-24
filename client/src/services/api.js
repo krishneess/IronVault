@@ -12,10 +12,11 @@ export const tokenStore = {
 };
 
 export class ApiRequestError extends Error {
-  constructor(message, status = 0, errors = undefined) {
+  constructor(message, status = 0, errors = undefined, code = undefined) {
     super(message);
     this.status = status;
     this.errors = errors;
+    this.code = code;
   }
 }
 
@@ -64,7 +65,8 @@ export async function apiRequest(path, { method = 'GET', body, params, signal } 
     throw new ApiRequestError(
       payload?.message || `Request failed (${response.status})`,
       response.status,
-      payload?.errors
+      payload?.errors,
+      payload?.code
     );
   }
 

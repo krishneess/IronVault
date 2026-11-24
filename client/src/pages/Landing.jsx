@@ -24,6 +24,9 @@ import {
 } from 'lucide-react';
 import Logo, { LogoMark } from '../components/common/Logo';
 import { useAuth } from '../context/AuthContext';
+import TierCards from '../components/membership/TierCards';
+import { tierService } from '../services/adminService';
+import useApiData from '../hooks/useApiData';
 import { roleHome } from '../utils/format';
 import '../styles/landing.css';
 
@@ -89,6 +92,7 @@ export default function Landing() {
   const { user } = useAuth();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const tiers = useApiData(() => tierService.listPublic(), []);
 
   useEffect(() => {
     document.title = 'IronVault – Gym Fitness Repository Management';
@@ -119,6 +123,7 @@ export default function Landing() {
               <a href="#roles">Who it’s for</a>
               <a href="#how">How it works</a>
               <a href="#membership">Membership</a>
+              <a href="#plans">Plans</a>
             </nav>
             <div className="d-none d-lg-flex gap-2">
               {user ? (
@@ -335,6 +340,30 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Membership plans (live from the repository) */}
+      {tiers.data?.length > 0 && (
+        <section id="plans" className="section pt-0">
+          <div className="container">
+            <div className="text-center mx-auto mb-5" style={{ maxWidth: 640 }}>
+              <div className="eyebrow">Membership plans</div>
+              <h2 className="section-title">Choose how you train</h2>
+              <p className="section-lead mx-auto">Every plan includes your own member dashboard and progress history. Pay at the front desk – no card details online.</p>
+            </div>
+            <TierCards
+              tiers={tiers.data}
+              renderAction={(tier, featured) => (
+                <Link
+                  to={user ? (user.role === 'member' ? '/member/membership' : roleHome(user.role)) : '/register'}
+                  className={`btn w-100 mt-3 ${featured ? 'btn-gold' : 'btn-outline-gold'}`}
+                >
+                  {user ? 'View membership' : `Join with ${tier.name}`}
+                </Link>
+              )}
+            />
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="section pt-0">

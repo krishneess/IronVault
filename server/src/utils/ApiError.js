@@ -1,9 +1,10 @@
 /** Operational error carrying an HTTP status and optional field errors. */
 export default class ApiError extends Error {
-  constructor(statusCode, message, errors = undefined) {
+  constructor(statusCode, message, errors = undefined, code = undefined) {
     super(message);
     this.statusCode = statusCode;
     this.errors = errors;
+    this.code = code; // machine-readable reason, e.g. MEMBERSHIP_INACTIVE
     this.isOperational = true;
   }
 

@@ -47,3 +47,6 @@ export const titleCase = (text = '') =>
   String(text)
     .replace(/_/g, ' ')
     .replace(/\w\S*/g, (w) => w[0].toUpperCase() + w.slice(1).toLowerCase());
+
+/** "1 meal" / "3 meals". */
+export const pluralize = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
