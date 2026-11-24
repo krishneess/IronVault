@@ -17,7 +17,7 @@
     "postman:build": "node postman/build-collection.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": "22.x"
   },
   "license": "UNLICENSED",
   "type": "module"
